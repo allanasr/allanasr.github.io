@@ -117,8 +117,9 @@ function createCubes() {
             "assets/textures/01-Breakout-Tiles.png"
           );
         } else {
-          const textureFile = `assets/textures/0${colorIndex + 1
-            }-Breakout-Tiles.png`;
+          const textureFile = `assets/textures/0${
+            colorIndex + 1
+          }-Breakout-Tiles.png`;
           material = setMaterial(blockColors[colorIndex], textureFile);
         }
 
@@ -173,8 +174,9 @@ function createCubes() {
               "assets/textures/01-Breakout-Tiles.png"
             );
           } else {
-            const textureFile = `assets/textures/0${colorIndex + 1
-              }-Breakout-Tiles.png`;
+            const textureFile = `assets/textures/0${
+              colorIndex + 1
+            }-Breakout-Tiles.png`;
             material = setMaterial(blockColors[colorIndex], textureFile);
           }
           const cube = new THREE.Mesh(geometry, material);
@@ -816,16 +818,19 @@ function setMaterial(color, file = null, repeatU = 1, repeatV = 0.8) {
   return mat;
 }
 
-const path = 'assets/textures/milky-way/'
-const format = '.png'
+const path = "assets/textures/milky-way/";
+const format = ".png";
 const urls = [
-  path + 'posx' + format, path + 'negx' + format,
-  path + 'posy' + format, path + 'negy' + format,
-  path + 'posz' + format, path + 'negz' + format,
-]
+  path + "posx" + format,
+  path + "negx" + format,
+  path + "posy" + format,
+  path + "negy" + format,
+  path + "posz" + format,
+  path + "negz" + format,
+];
 
-let cubeMapTexture = new THREE.CubeTextureLoader().load(urls)
-scene.background = cubeMapTexture
+let cubeMapTexture = new THREE.CubeTextureLoader().load(urls);
+scene.background = cubeMapTexture;
 
 //// Render
 
@@ -872,8 +877,6 @@ window.addEventListener(
   },
   false
 );
-
-window.addEventListener("mousemove", onMouseMove);
 
 window.addEventListener("mousedown", () => {
   if (!start) {
@@ -950,10 +953,16 @@ function toggleOrbit() {
   }
 }
 
-function onMouseMove(event) {
+window.addEventListener("touchmove", onTouchMove);
+
+function onTouchMove(event) {
+  event.preventDefault();
+
+  let touch = event.touches[0];
+
   let pointer = new THREE.Vector2();
-  pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-  pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+  pointer.x = (touch.clientX / window.innerWidth) * 2 - 1;
+  pointer.y = -(touch.clientY / window.innerHeight) * 2 + 1;
 
   const planeWidth = 8;
 
