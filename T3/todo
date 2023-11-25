@@ -1,0 +1,17 @@
+[√] Terceiro Nivel
+[√] Blocos Texturizados
+[√] Skybox
+[ ] Correto posicionamento da câmera e visualização do ambiente
+[ ] Rebatedor composto e texturizado
+[ ] Power-ups I
+[ ] Power-ups II
+[√] Vidas
+[√] Orbit Controls
+[!] Telas de início e fim
+[√] Colisão copm o rebatedor (som)
+[√] Colisão com bloco comum (som)
+[√] Colisão com bloco com resistência maior ou indestrutivel (som)
+[√] Colisão com qualquer bloco quando segundo power-up estiver ativo (som)
+[√] Criação da github page
+[ ] Criação da aplicação mobile
+[ ] Criação dos botões de ambiente mobile
