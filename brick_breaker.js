@@ -953,9 +953,19 @@ function toggleOrbit() {
   }
 }
 
+let isTouching = false;
+
+window.addEventListener("touchstart", onTouchStart);
 window.addEventListener("touchmove", onTouchMove);
+window.addEventListener("touchend", onTouchEnd);
+
+function onTouchStart(event) {
+  isTouching = true;
+}
 
 function onTouchMove(event) {
+  if (!isTouching) return;
+
   event.preventDefault();
 
   let touch = event.touches[0];
@@ -984,6 +994,10 @@ function onTouchMove(event) {
       ballObject.ball.position.x = hitterMesh.position.x;
     }
   }
+}
+
+function onTouchEnd(event) {
+  isTouching = false;
 }
 //// AUDIO
 
