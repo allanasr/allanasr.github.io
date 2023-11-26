@@ -8,7 +8,7 @@ import { Audio } from "three";
 let scene, renderer, camera, speedometer, orbit;
 scene = new THREE.Scene();
 renderer = initRenderer();
-camera = initCamera(new THREE.Vector3(0, -7, 18));
+camera = initCamera(new THREE.Vector3(0, -7, 23));
 
 var start = false;
 var keyboard = new KeyboardState();
@@ -315,15 +315,15 @@ function removeCube(i) {
 //// Walls
 
 function createWalls() {
-  const wallGeometry = new THREE.BoxGeometry(0.2, 17, 0.4);
+  const wallGeometry = new THREE.BoxGeometry(0.2, 19, 0.4);
   const roofGeometry = new THREE.BoxGeometry(8.3, 0.2, 0.4);
   const material = new THREE.MeshPhongMaterial({ color: "rgb(105,105,105)" });
   const leftWall = new THREE.Mesh(wallGeometry, material);
   const rightWall = new THREE.Mesh(wallGeometry, material);
   const topWall = new THREE.Mesh(roofGeometry, material);
 
-  leftWall.position.set(-4.05, 1, 0);
-  rightWall.position.set(4.05, 1, 0);
+  leftWall.position.set(-4.05, 0, 0);
+  rightWall.position.set(4.05, 0, 0);
   topWall.position.set(0, 9.5, 0);
   objectsToIntersect.push(leftWall);
   objectsToIntersect.push(rightWall);
@@ -368,7 +368,7 @@ function createHitterMesh() {
   });
 
   hitterMesh.castShadow = true;
-  hitterMesh.position.set(0, -8, 0);
+  hitterMesh.position.set(0, -10, 0);
   objectsToIntersect.push(hitterMesh);
 
   scene.add(hitterMesh);
@@ -428,9 +428,17 @@ function createSecondBall() {
     new THREE.MeshPhongMaterial({ color: "rgb(255, 255, 0)", shininess: "100" })
   );
 
-  ballObject2.bb = new THREE.Box3().setFromObject(ballObject2.ball);
+  ballObject2.bb = new THREE.Box3().setFromObject(ballObject.ball);
   ballObject2.ball.geometry.computeBoundingSphere();
   ballObject2.ball.castShadow = true;
+  console.log("before", ballObject2.ball.position);
+
+  ballObject2.ball.position.set(
+    ballObject.ball.position.x,
+    ballObject.ball.position.y,
+    0
+  );
+  console.log("after", ballObject2.ball.position);
   scene.add(ballObject2.ball);
 }
 
@@ -439,6 +447,7 @@ function spawnSecondBall() {
   ballObject2.ballVelocity.copy(ballObject.ballVelocity);
 
   createSecondBall();
+  console.log("final", ballObject2.ball.position);
 }
 
 function setBallPosition(ballObject) {
