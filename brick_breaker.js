@@ -13,6 +13,7 @@ camera = initCamera(new THREE.Vector3(0, -7, 23));
 var start = false;
 var keyboard = new KeyboardState();
 var pause = false;
+var endFlag = false;
 
 var startTime = Date.now();
 
@@ -80,7 +81,7 @@ let cubesBb = [];
 
 let cubesToIntersect = [];
 
-let yPosLimit = 8;
+let yPosLimit = 9;
 
 const blockColors = [
   "rgb(188, 188, 188)", // cinza
@@ -106,7 +107,7 @@ function createCubes() {
     rows = 6;
     for (let row = 0; row < rows; row++) {
       // Comment this to add the remaining blocks back
-      // if (row != 5) continue
+      // if (row != 5) continue;
       const colorIndex = blockColors.length - 1 - (row % blockColors.length);
       for (let col = 0; col < cols; col++) {
         const geometry = new THREE.BoxGeometry(cubeSize * 2.2, cubeSize, 0.4);
@@ -431,14 +432,12 @@ function createSecondBall() {
   ballObject2.bb = new THREE.Box3().setFromObject(ballObject.ball);
   ballObject2.ball.geometry.computeBoundingSphere();
   ballObject2.ball.castShadow = true;
-  console.log("before", ballObject2.ball.position);
 
   ballObject2.ball.position.set(
     ballObject.ball.position.x,
     ballObject.ball.position.y,
     0
   );
-  console.log("after", ballObject2.ball.position);
   scene.add(ballObject2.ball);
 }
 
@@ -447,7 +446,6 @@ function spawnSecondBall() {
   ballObject2.ballVelocity.copy(ballObject.ballVelocity);
 
   createSecondBall();
-  console.log("final", ballObject2.ball.position);
 }
 
 function setBallPosition(ballObject) {
@@ -683,11 +681,7 @@ function checkCubesRemoval(ballObject) {
     }
   } else {
     if (cubes.length == 8) {
-      console.log("ganhou");
-      toggleStart();
-      togglePause();
-
-      showEndScreen(true);
+      endFlag = true;
     }
   }
 }
@@ -808,6 +802,12 @@ function showEndScreen(win) {
     });
 }
 
+function toggleEndGame() {
+  toggleStart();
+  togglePause();
+  showEndScreen(true);
+}
+
 function hideEndScreen() {
   document.getElementById("endScreen").style.display = "none";
 }
@@ -876,6 +876,7 @@ function render() {
       restartCounters(ballObject2, true);
       moveBall2(ballObject2);
     }
+    if (endFlag) toggleEndGame();
   }
 
   renderer.render(scene, camera);
@@ -918,7 +919,7 @@ window.addEventListener("keydown", (event) => {
     setBallPosition(ballObject);
   }
   if (event.key === "i") {
-    showEndScreen(false);
+    showEndScreen(true);
   }
   if (event.key === "o") {
     toggleOrbit();
