@@ -8,7 +8,7 @@ import { Audio } from "three";
 let scene, renderer, camera, speedometer, orbit;
 scene = new THREE.Scene();
 renderer = initRenderer();
-camera = initCamera(new THREE.Vector3(0, 0, 18));
+camera = initCamera(new THREE.Vector3(0, -7, 18));
 
 var start = false;
 var keyboard = new KeyboardState();
@@ -36,7 +36,7 @@ scene.add(plane);
 objects.push(plane);
 
 plane = objects[0];
-plane.position.set(0, 0.1, -0.5);
+plane.position.set(0, 0.2, -0.5);
 plane.layers.set(0);
 
 speedometer = document.getElementById("speedometer");
@@ -100,7 +100,7 @@ function createCubes() {
   let cols = 11;
   const cubeSize = 0.3;
   const totalWidth = cols * (cubeSize + spacingX) - spacingX;
-  const totalHeight = -4;
+  const totalHeight = -8;
 
   if (nivel == 1) {
     rows = 6;
@@ -315,16 +315,16 @@ function removeCube(i) {
 //// Walls
 
 function createWalls() {
-  const wallGeometry = new THREE.BoxGeometry(0.2, 16, 0.4);
+  const wallGeometry = new THREE.BoxGeometry(0.2, 17, 0.4);
   const roofGeometry = new THREE.BoxGeometry(8.3, 0.2, 0.4);
   const material = new THREE.MeshPhongMaterial({ color: "rgb(105,105,105)" });
   const leftWall = new THREE.Mesh(wallGeometry, material);
   const rightWall = new THREE.Mesh(wallGeometry, material);
   const topWall = new THREE.Mesh(roofGeometry, material);
 
-  leftWall.position.set(-4.05, 0, 0);
-  rightWall.position.set(4.05, 0, 0);
-  topWall.position.set(0, 7.4, 0);
+  leftWall.position.set(-4.05, 1, 0);
+  rightWall.position.set(4.05, 1, 0);
+  topWall.position.set(0, 9.5, 0);
   objectsToIntersect.push(leftWall);
   objectsToIntersect.push(rightWall);
   objectsToIntersect.push(topWall);
@@ -505,17 +505,20 @@ function checkBallPosition(ballObject) {
 const hearts = [];
 const maxLives = 5;
 let currentLives = maxLives;
+var fixedScene = new THREE.Scene();
+
 initLivesDisplay();
 
 function initLivesDisplay() {
   for (let i = 0; i < maxLives; i++) {
     const heartMesh = createHeartMesh();
-    heartMesh.position.set(-3.5 + i * 0.5, 7, 0);
-    heartMesh.scale.set(0.015, 0.015);
-    scene.add(heartMesh);
+    heartMesh.position.set(-3.5 + i * 0.5, 9, 0);
+    heartMesh.scale.set(0.02, 0.02);
+    fixedScene.add(heartMesh);
     hearts.push(heartMesh);
   }
 }
+scene.add(fixedScene);
 
 function updateLivesDisplay() {
   hearts.forEach((heart, index) => {
@@ -821,17 +824,18 @@ function setMaterial(color, file = null, repeatU = 1, repeatV = 0.8) {
 const path = "assets/textures/milky-way/";
 const format = ".png";
 const urls = [
-  path + "posx" + format,
-  path + "negx" + format,
+  path + "negx" + format, //
+  path + "posx" + format, //
   path + "posy" + format,
-  path + "negy" + format,
-  path + "posz" + format,
-  path + "negz" + format,
+  path + "negy" + format, //
+  path + "negz" + format, //
+  path + "posz" + format, //
 ];
 
 let cubeMapTexture = new THREE.CubeTextureLoader().load(urls);
+cubeMapTexture.rotation = 2 * Math.PI;
 scene.background = cubeMapTexture;
-
+scene.background.rotation = Math.PI;
 //// Render
 
 let deltaTime;
