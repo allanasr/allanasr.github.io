@@ -98,7 +98,7 @@
       position: absolute;
       border: 2px solid white;
       color: white;
-      top: 50%;
+      top: 60%;
       left: 50%;
       transform: translate(-50%, -50%);
       margin: 0 auto;
@@ -113,7 +113,7 @@
 
     .title {
       position: absolute;
-      top: 25%;
+      top: 5%;
       left: 50%;
       transform: translateX(-50%);
       font-size: 72px;
@@ -127,6 +127,29 @@
       display: block;
       margin-top: 10px;
       letter-spacing: 4px; /* Adjust spacing for a pixelated look */
+    }
+
+    .video-game-button {
+      width: 3em;
+      line-height: 3em;
+      border-radius: 1.5em; /* 1.5 to be round */
+      cursor: pointer;
+      position: fixed;
+      font-size: 20pt;
+      color: rgb(255, 255, 255);
+      background-color: transparent;
+      background-image: linear-gradient(var(--unselected));
+      background-image: -moz-linear-gradient(var(--unselected));
+      background-image: -o-linear-gradient(var(--unselected));
+      background-image: -webkit-linear-gradient(var(--unselected));
+      -webkit-tap-highlight-color: rgba(255, 253, 253, 0);
+      user-select: none;
+    }
+    .video-game-button:active {
+      background-image: linear-gradient(var(--selected));
+      background-image: -moz-linear-gradient(var(--selected));
+      background-image: -o-linear-gradient(var(--selected));
+      background-image: -webkit-linear-gradient(var(--selected));
     }
   </style>
   <body>
@@ -147,6 +170,29 @@
     <div id="endScreen" style="display: none">
       <button id="restartButton">Restart Game</button>
     </div>
+    <button
+      style="bottom: 20px; right: 20px; background-color: #cccccc45"
+      id="A"
+      class="video-game-button"
+    >
+      GO
+    </button>
+
+    <button
+      style="
+        top: 10px;
+        right: 20px;
+        width: 1emp;
+        line-height: 1.4em;
+        font-size: 10pt;
+        background-color: #cccccc;
+        background-image: none;
+      "
+      id="full"
+      class="video-game-button"
+    >
+      [ ]
+    </button>
     <div id="webgl-output">
       <script type="module" src="brick_breaker.js"></script>
     </div>

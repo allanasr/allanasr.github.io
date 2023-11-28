@@ -3,12 +3,12 @@ import KeyboardState from "../../libs/util/KeyboardState.js";
 import { OrbitControls } from "../build/jsm/controls/OrbitControls.js";
 import { initRenderer, initCamera, onWindowResize } from "../libs/util/util.js";
 import { CSG } from "../libs/other/CSGMesh.js";
-import { MathUtils } from "../build/three.module.js";
+import { Buttons } from "../libs/other/buttons.js";
 
 let scene, renderer, camera, speedometer, orbit;
 scene = new THREE.Scene();
 renderer = initRenderer();
-camera = initCamera(new THREE.Vector3(0, -7, 23));
+camera = initCamera(new THREE.Vector3(0, -7, 10));
 
 var start = false;
 var keyboard = new KeyboardState();
@@ -81,7 +81,7 @@ let cubesBb = [];
 
 let cubesToIntersect = [];
 
-let yPosLimit = 9;
+let yPosLimit = 7;
 
 const blockColors = [
   "rgb(188, 188, 188)", // cinza
@@ -92,7 +92,7 @@ const blockColors = [
   "rgb(128,208,16)", // verde
 ];
 
-let nivel = 3;
+let nivel = 1;
 
 function createCubes() {
   const spacingX = 0.4;
@@ -101,7 +101,7 @@ function createCubes() {
   let cols = 11;
   const cubeSize = 0.3;
   const totalWidth = cols * (cubeSize + spacingX) - spacingX;
-  const totalHeight = -8;
+  const totalHeight = -2;
 
   if (nivel == 1) {
     rows = 6;
@@ -330,9 +330,9 @@ function createWalls() {
   const rightWall = new THREE.Mesh(wallGeometry, material);
   const topWall = new THREE.Mesh(roofGeometry, material);
 
-  leftWall.position.set(-4.05, 0, 0);
-  rightWall.position.set(4.05, 0, 0);
-  topWall.position.set(0, 9.5, 0);
+  leftWall.position.set(-4.05, -1.5, 0);
+  rightWall.position.set(4.05, -1.5, 0);
+  topWall.position.set(0, 8, 0);
   objectsToIntersect.push(leftWall);
   objectsToIntersect.push(rightWall);
   objectsToIntersect.push(topWall);
@@ -376,7 +376,7 @@ function createHitterMesh() {
   });
 
   hitterMesh.castShadow = true;
-  hitterMesh.position.set(0, -10, 0);
+  hitterMesh.position.set(0, -5.5, 0);
   objectsToIntersect.push(hitterMesh);
 
   scene.add(hitterMesh);
@@ -567,8 +567,8 @@ initLivesDisplay();
 function initLivesDisplay() {
   for (let i = 0; i < maxLives; i++) {
     const heartMesh = createHeartMesh();
-    heartMesh.position.set(1.5 + i * 0.5, 9, 0);
-    heartMesh.scale.set(0.02, 0.02);
+    heartMesh.position.set(0.5 + i * 0.7, 7, 0);
+    heartMesh.scale.set(0.025, 0.025);
     fixedScene.add(heartMesh);
     hearts.push(heartMesh);
   }
@@ -930,8 +930,27 @@ function hideEndScreen() {
   document.getElementById("endScreen").style.display = "none";
 }
 
+//// Buttons
+var buttons = new Buttons(onButtonDown, onButtonUp);
+var pressedA = false;
+function onButtonDown(event) {
+  switch (event.target.id) {
+    case "A":
+      toggleStart();
+
+      break;
+    case "full":
+      buttons.setFullScreen();
+      break;
+  }
+}
+
+function onButtonUp(event) {
+  pressedA = false;
+}
+
+
 //// Texture
-// let loader = new THREE.TextureLoader();
 
 function loadTexture(manager, file) {
   const loader = new THREE.TextureLoader(manager);
