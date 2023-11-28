@@ -3,7 +3,7 @@ import KeyboardState from "../../libs/util/KeyboardState.js";
 import { OrbitControls } from "../build/jsm/controls/OrbitControls.js";
 import { initRenderer, initCamera, onWindowResize } from "../libs/util/util.js";
 import { CSG } from "../libs/other/CSGMesh.js";
-import { Audio } from "three";
+import { MathUtils } from "../build/three.module.js";
 
 let scene, renderer, camera, speedometer, orbit;
 scene = new THREE.Scene();
@@ -118,14 +118,16 @@ function createCubes() {
             "assets/textures/01-Breakout-Tiles.png"
           );
         } else {
-          const textureFile = `assets/textures/0${
-            colorIndex + 1
-          }-Breakout-Tiles.png`;
+          const textureFile = `assets/textures/0${colorIndex + 1
+            }-Breakout-Tiles.png`;
           material = setMaterial(blockColors[colorIndex], textureFile);
         }
 
         const cube = new THREE.Mesh(geometry, material);
-        cube.userData.originalColor = blockColors[colorIndex];
+        cube.userData.originalColor = {
+          color: blockColors[colorIndex],
+          texture: `assets/textures/0${colorIndex + 1}-Breakout-Tiles.png`,
+        };
         const xPosition =
           col * (cubeSize + spacingX) - totalWidth / 2 + cubeSize / 2;
         const yPosition =
@@ -175,13 +177,18 @@ function createCubes() {
               "assets/textures/01-Breakout-Tiles.png"
             );
           } else {
-            const textureFile = `assets/textures/0${
-              colorIndex + 1
-            }-Breakout-Tiles.png`;
+            const textureFile = `assets/textures/0${colorIndex + 1
+              }-Breakout-Tiles.png`;
             material = setMaterial(blockColors[colorIndex], textureFile);
           }
           const cube = new THREE.Mesh(geometry, material);
-          cube.userData.originalColor = blockColors[colorIndex];
+          cube.userData.originalColor = {
+            color: blockColors[colorIndex],
+            texture:
+              blockColors[colorIndex] === "rgb(188, 188, 188)"
+                ? "assets/textures/01-Breakout-Tiles.png"
+                : `assets/textures/0${colorIndex + 1}-Breakout-Tiles.png`,
+          };
           const xPosition =
             col * (4 * cubeSize + 3 * spacingX) +
             i * (cubeSize + spacingX) +
@@ -411,10 +418,19 @@ let ballObject2 = {
   ballVelocity: new THREE.Vector3(0, -3.5, 0),
 };
 
+let ballObject3 = {
+  ball: null,
+  bb: null,
+  ballVelocity: new THREE.Vector3(0, -3.5, 0),
+};
+
 function createBall() {
   ballObject.ball = new THREE.Mesh(
     new THREE.SphereGeometry(0.15, 30, 30, 0, Math.PI * 2, 0, Math.PI),
-    new THREE.MeshPhongMaterial({ color: "rgb(37, 255, 62)", shininess: "100" })
+    new THREE.MeshPhongMaterial({
+      color: "rgb(255,255,2555)",
+      shininess: "100",
+    })
   );
   setBallPosition(ballObject);
   ballObject.bb = new THREE.Box3().setFromObject(ballObject.ball);
@@ -441,11 +457,38 @@ function createSecondBall() {
   scene.add(ballObject2.ball);
 }
 
-function spawnSecondBall() {
-  extraBall = true;
-  ballObject2.ballVelocity.copy(ballObject.ballVelocity);
+function createThirdBall() {
+  ballObject3.ball = new THREE.Mesh(
+    new THREE.SphereGeometry(0.15, 30, 30, 0, Math.PI * 2, 0, Math.PI),
+    new THREE.MeshPhongMaterial({ color: "rgb(255, 255, 0)", shininess: "100" })
+  );
 
+  ballObject3.bb = new THREE.Box3().setFromObject(ballObject.ball);
+  ballObject3.ball.geometry.computeBoundingSphere();
+  ballObject3.ball.castShadow = true;
+
+  ballObject3.ball.position.set(
+    ballObject.ball.position.x,
+    ballObject.ball.position.y,
+    0
+  );
+  scene.add(ballObject3.ball);
+}
+
+function spawnExtraBalls() {
+  extraBall = true;
+  ballObject2.ballVelocity = new THREE.Vector3(
+    ballObject.ballVelocity.x * -1,
+    ballObject.ballVelocity.y * -1,
+    0
+  );
+  ballObject3.ballVelocity = new THREE.Vector3(
+    ballObject.ballVelocity.x * -1,
+    ballObject.ballVelocity.y * 1,
+    0
+  );
   createSecondBall();
+  createThirdBall();
 }
 
 function setBallPosition(ballObject) {
@@ -493,9 +536,7 @@ function checkBallPosition(ballObject) {
     updateLivesDisplay();
     blockCount = 0;
     powerCount = 0;
-    ballObject.ball.position.set(0, -1.0, 0);
-    ballObject.ballVelocity.x = 0;
-    ballObject.ballVelocity.y = -3.5;
+    respawnBall();
     if (nivel == 2) {
       setBallPosition(ballObject);
     }
@@ -507,6 +548,13 @@ function checkBallPosition(ballObject) {
   }
 }
 
+function respawnBall() {
+  setBallPosition(ballObject);
+  ballObject.ballVelocity.x = 0;
+  ballObject.ballVelocity.y = -3.5;
+  toggleStart();
+  togglePause();
+}
 //// Life
 
 const hearts = [];
@@ -519,7 +567,7 @@ initLivesDisplay();
 function initLivesDisplay() {
   for (let i = 0; i < maxLives; i++) {
     const heartMesh = createHeartMesh();
-    heartMesh.position.set(-3.5 + i * 0.5, 9, 0);
+    heartMesh.position.set(1.5 + i * 0.5, 9, 0);
     heartMesh.scale.set(0.02, 0.02);
     fixedScene.add(heartMesh);
     hearts.push(heartMesh);
@@ -650,8 +698,12 @@ function checkCubesRemoval(ballObject) {
       if (cubeColor.r != 188 && cubeColor.g != 188 && cubeColor.b != 188) {
         if (powerCount == 0) {
           blockCount++;
+          blockCount2++;
           if (blockCount == blockLimit) {
-            spawnPowerUp(cubes[i].position.x, cubes[i].position.y);
+            spawnPowerUp1(cubes[i].position.x, cubes[i].position.y);
+          }
+          if (blockCount2 == blockLimit + 5) {
+            spawnPowerUp2(cubes[i].position.x, cubes[i].position.y);
           }
         }
         removeCube(i);
@@ -664,7 +716,7 @@ function checkCubesRemoval(ballObject) {
         continue;
       } else {
         cubes[i].material.color.set("rgb(166, 165, 165)");
-        cubes[i].userData.originalColor = "rgb(166, 165, 165)";
+        cubes[i].userData.originalColor.color = "rgb(166, 165, 165)";
         playAudio(bloco2);
       }
     }
@@ -708,6 +760,7 @@ function convertTo255(color) {
 //// Power UP
 
 let blockCount = 9;
+let blockCount2 = 13;
 let powerCount = 0;
 let blockLimit = 10;
 
@@ -717,12 +770,18 @@ let powerUpObject = {
   powerUpVelocity: new THREE.Vector3(0, -0.1, 0),
 };
 
-function spawnPowerUp(xPos, yPos) {
+let powerUpObject2 = {
+  powerUp: null,
+  bb: null,
+  powerUpVelocity: new THREE.Vector3(0, -0.1, 0),
+};
+
+function spawnPowerUp1(xPos, yPos) {
   if (blockCount == blockLimit && !extraBall) {
     blockCount++;
     powerCount = 1;
     powerUpObject.powerUp = new THREE.Mesh(
-      new THREE.BoxGeometry(0.2, 0.1, 0.2),
+      new THREE.CapsuleGeometry(0.15, 0.1, 32),
       new THREE.MeshPhongMaterial({ color: "rgb(255, 255, 0)" })
     );
     powerUpObject.powerUp.position.set(xPos, yPos, 0);
@@ -734,58 +793,117 @@ function spawnPowerUp(xPos, yPos) {
   }
 }
 
-function movePowerUp() {
-  const fallSpeed = 0.05;
-  powerUpObject.powerUp.position.x += 0;
-  powerUpObject.powerUp.position.y += -fallSpeed;
-  powerUpObject.bb.setFromObject(powerUpObject.powerUp);
-  checkCollisionPowerUp();
-  checkPowerUpPosition();
+function spawnPowerUp2(xPos, yPos) {
+  if (blockCount2 == blockLimit + 5) {
+    blockCount2++;
+    powerCount = 2;
+    powerUpObject2.powerUp = new THREE.Mesh(
+      new THREE.CapsuleGeometry(0.15, 0.1, 32),
+      new THREE.MeshPhongMaterial({ color: "rgb(0, 255, 255)" })
+    );
+    powerUpObject2.powerUp.position.set(xPos, yPos, 0);
+    powerUpObject2.bb = new THREE.Box3().setFromObject(powerUpObject2.powerUp);
+    powerUpObject2.powerUp.geometry.computeBoundingBox();
+    powerUpObject2.powerUp.castShadow = true;
+
+    scene.add(powerUpObject2.powerUp);
+  }
+}
+
+function movePowerUp(powerUp) {
+  const fallSpeed = 0.03;
+  powerUp.powerUp.position.x += 0;
+  powerUp.powerUp.position.y += -fallSpeed;
+  powerUp.bb.setFromObject(powerUp.powerUp);
+  checkCollisionPowerUp(powerUp);
+  checkPowerUpPosition(powerUp);
 }
 
 let extraBall = false;
 
-function checkCollisionPowerUp() {
+function checkCollisionPowerUp(powerUp) {
   let raycaster = new THREE.Raycaster(
-    powerUpObject.powerUp.position,
+    powerUp.powerUp.position,
     new THREE.Vector3(0, -0.1, 0),
     0,
     0.3
   );
   let intersect = raycaster.intersectObject(hitterMesh);
   if (intersect.length > 0) {
-    powerCount = 0;
-    blockCount = 0;
-    scene.remove(powerUpObject.powerUp);
-    spawnSecondBall();
+    if (powerUp == powerUpObject) {
+      powerCount = 0;
+      blockCount = 0;
+      spawnExtraBalls();
+    }
+    else if (powerUp == powerUpObject2) {
+      powerCount = 0;
+      blockCount2 = 0;
+
+    }
+    scene.remove(powerUp.powerUp);
   }
 }
 
-function restartCounters(ballObject, check) {
-  if (ballObject.ball.position.y < -yPosLimit) {
+
+
+function restartCounters() {
+  if (
+    ballObject2.ball.position.y < -yPosLimit &&
+    ballObject3.ball.position.y < -yPosLimit
+  ) {
     extraBall = false;
     blockCount = 0;
+    blockCount2 = 0;
     powerCount = 0;
-    if (check) {
-      removeExtras();
-    }
+    removeExtras();
   }
 }
 
-function checkPowerUpPosition() {
-  if (powerUpObject.powerUp.position.y < -yPosLimit) {
-    powerCount = 0;
-    blockCount = 0;
-    scene.remove(powerUpObject.powerUp);
+function checkPowerUpPosition(powerUp) {
+  if (powerUp.powerUp.position.y < -yPosLimit) {
+    if (powerUp == powerUpObject) {
+      powerCount = 0;
+      blockCount = 0;
+      scene.remove(powerUpObject.powerUp);
+    }
+    if (powerUp == powerUpObject2) {
+      powerCount = 0;
+      blockCount2 = 0;
+      scene.remove(powerUpObject2.powerUp);
+    }
   }
 }
 
 function removeExtras() {
   scene.remove(ballObject2.ball);
+  scene.remove(ballObject3.ball);
+
   scene.remove(powerUpObject.powerUp);
+  scene.remove(powerUpObject2.powerUp);
+
 }
 
 //// Start
+const loadingManager = new THREE.LoadingManager(() => {
+  let loadingScreen = document.getElementById("loading-screen");
+  loadingScreen.transition = 0;
+
+  let button = document.getElementById("myBtn");
+  button.style.backgroundColor = "Red";
+  button.innerHTML = "Click to Enter";
+  button.addEventListener("click", onButtonPressed);
+});
+
+function onButtonPressed() {
+  start = false;
+  const loadingScreen = document.getElementById("loading-screen");
+  loadingScreen.transition = 0;
+  loadingScreen.classList.add("fade-out");
+  loadingScreen.addEventListener("transitionend", (e) => {
+    const element = e.target;
+    element.remove();
+  });
+}
 
 //// End
 
@@ -813,8 +931,12 @@ function hideEndScreen() {
 }
 
 //// Texture
-let loader = new THREE.TextureLoader();
+// let loader = new THREE.TextureLoader();
 
+function loadTexture(manager, file) {
+  const loader = new THREE.TextureLoader(manager);
+  return loader.load(file);
+}
 function setMaterial(color, file = null, repeatU = 1, repeatV = 0.8) {
   if (!color) color = "rgb(255,255,255)";
 
@@ -822,7 +944,8 @@ function setMaterial(color, file = null, repeatU = 1, repeatV = 0.8) {
   if (!file) {
     mat = new THREE.MeshBasicMaterial({ color: color });
   } else {
-    mat = new THREE.MeshBasicMaterial({ map: loader.load(file), color: color });
+    let object = loadTexture(loadingManager, file);
+    mat = new THREE.MeshBasicMaterial({ map: object, color: color });
     mat.map.wrapS = mat.map.wrapT = THREE.RepeatWrapping;
     mat.map.minFilter = mat.map.magFilter = THREE.LinearFilter;
     mat.map.repeat.set(repeatU, repeatV);
@@ -833,15 +956,20 @@ function setMaterial(color, file = null, repeatU = 1, repeatV = 0.8) {
 const path = "assets/textures/milky-way/";
 const format = ".png";
 const urls = [
-  path + "negx" + format, //
-  path + "posx" + format, //
+  path + "negx" + format,
+  path + "posx" + format,
   path + "posy" + format,
-  path + "negy" + format, //
-  path + "negz" + format, //
-  path + "posz" + format, //
+  path + "negy" + format,
+  path + "negz" + format,
+  path + "posz" + format,
 ];
 
-let cubeMapTexture = new THREE.CubeTextureLoader().load(urls);
+function loadCubeMapTexture(manager, urls) {
+  const loader = new THREE.CubeTextureLoader(manager);
+  return loader.load(urls);
+}
+
+const cubeMapTexture = loadCubeMapTexture(loadingManager, urls);
 cubeMapTexture.rotation = 2 * Math.PI;
 scene.background = cubeMapTexture;
 scene.background.rotation = Math.PI;
@@ -854,32 +982,42 @@ createCubes();
 createWalls();
 render();
 
+
 function render() {
   requestAnimationFrame(render);
-  if (pause) return;
+  if (!pause) {
+    deltaTime = clock.getDelta();
+    auxKeys();
+    console.log(blockCount);
+    if (start) {
+      checkCollisionsObjects(ballObject);
+      checkCollisionCubes(ballObject);
+      checkCubesRemoval(ballObject);
+      checkBallPosition(ballObject);
+      moveBall(ballObject);
 
-  deltaTime = clock.getDelta();
-  auxKeys();
+      if (powerCount === 1) movePowerUp(powerUpObject);
+      if (powerCount === 2) movePowerUp(powerUpObject2);
 
-  if (start) {
-    checkCollisionsObjects(ballObject);
-    checkCollisionCubes(ballObject);
-    checkCubesRemoval(ballObject);
-    checkBallPosition(ballObject);
-    moveBall(ballObject);
-    if (powerCount === 1) movePowerUp();
 
-    if (extraBall) {
-      checkCollisionsObjects(ballObject2);
-      checkCollisionCubes(ballObject2);
-      checkCubesRemoval(ballObject2);
-      restartCounters(ballObject2, true);
-      moveBall2(ballObject2);
+      if (extraBall) {
+        checkCollisionsObjects(ballObject2);
+        checkCollisionCubes(ballObject2);
+        checkCubesRemoval(ballObject2);
+        moveBall2(ballObject2);
+        checkCollisionsObjects(ballObject3);
+        checkCollisionCubes(ballObject3);
+        checkCubesRemoval(ballObject3);
+        restartCounters();
+        moveBall2(ballObject3);
+      }
     }
-    if (endFlag) toggleEndGame();
   }
 
   renderer.render(scene, camera);
+  if (pause) {
+    orbit.update(); // Make sure to call update on your OrbitControls instance
+  }
 }
 
 //// Listeners
@@ -893,8 +1031,13 @@ window.addEventListener(
 );
 
 window.addEventListener("mousedown", () => {
-  if (!start) {
-    toggleStart();
+  if (!orbitEnabled) {
+    if (!start) {
+      toggleStart();
+    }
+    if (pause) {
+      togglePause();
+    }
   }
 });
 
@@ -902,6 +1045,7 @@ window.addEventListener("keydown", (event) => {
   if (event.key === "r") {
     window.location.reload();
     blockCount = 0;
+    blockCount2 = 0;
     powerCount = 0;
   }
   if (event.key === " ") {
@@ -919,7 +1063,7 @@ window.addEventListener("keydown", (event) => {
     setBallPosition(ballObject);
   }
   if (event.key === "i") {
-    showEndScreen(true);
+    showEndScreen(false);
   }
   if (event.key === "o") {
     toggleOrbit();
@@ -958,10 +1102,11 @@ function toggleOrbit() {
   if (!orbitEnabled) {
     orbit = new OrbitControls(camera, renderer.domElement);
     orbitEnabled = true;
+    togglePause();
   } else {
     orbit.dispose();
     orbitEnabled = false;
-
+    togglePause();
     camera.position.copy(initialCameraPosition);
     camera.rotation.copy(initialCameraRotation);
   }
@@ -1023,30 +1168,20 @@ const bloco2 = new THREE.Audio(listener);
 const bloco3 = new THREE.Audio(listener);
 const rebatedor = new THREE.Audio(listener);
 
-const audioLoader = new THREE.AudioLoader();
-audioLoader.load("assets/sounds/bloco1.mp3", function (buffer) {
-  bloco1.setBuffer(buffer);
-  bloco1.setLoop(false);
-  bloco1.setVolume(0.5);
-});
+function loadAndSetAudio(manager, file, object, volume = 0.5, loop = false) {
+  const audioLoader = new THREE.AudioLoader(manager);
+  audioLoader.load(file, function (buffer) {
+    object.setBuffer(buffer);
+    object.setLoop(loop);
+    object.setVolume(volume);
+  });
+}
 
-audioLoader.load("assets/sounds/bloco2.mp3", function (buffer) {
-  bloco2.setBuffer(buffer);
-  bloco2.setLoop(false);
-  bloco2.setVolume(0.5);
-});
+loadAndSetAudio(loadingManager, "assets/sounds/bloco1.mp3", bloco1);
+loadAndSetAudio(loadingManager, "assets/sounds/bloco2.mp3", bloco2);
+loadAndSetAudio(loadingManager, "assets/sounds/bloco3.mp3", bloco3);
+loadAndSetAudio(loadingManager, "assets/sounds/rebatedor.mp3", rebatedor);
 
-audioLoader.load("assets/sounds/bloco3.mp3", function (buffer) {
-  bloco3.setBuffer(buffer);
-  bloco3.setLoop(false);
-  bloco3.setVolume(0.5);
-});
-
-audioLoader.load("assets/sounds/rebatedor.mp3", function (buffer) {
-  rebatedor.setBuffer(buffer);
-  rebatedor.setLoop(false);
-  rebatedor.setVolume(0.5);
-});
 
 camera.add(bloco1, bloco2, bloco3, rebatedor);
 
