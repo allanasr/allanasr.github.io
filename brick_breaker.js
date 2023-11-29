@@ -690,11 +690,11 @@ function checkCollisionCubes(ballObjects) {
         intersects[0].face.normal.y,
         0
       );
-      if (!indestructive) {
-        handleReflection(incidenceVector, ballObjects);
-        playAudio(bloco2);
-      } else if (ballObjects == ballObject) {
+      if (indestructive && ballObjects == ballObject) {
         playAudio(bloco3);
+      } else {
+        playAudio(bloco2);
+        handleReflection(incidenceVector, ballObjects);
       }
     }
   }
@@ -862,6 +862,10 @@ function checkCollisionPowerUp(powerUp) {
     } else if (powerUp == powerUpObject2) {
       powerCount = 0;
       blockCount2 = 0;
+      ballObject.ball.material = new THREE.MeshPhongMaterial({
+        color: "rgb(255, 0, 0)",
+      });
+      indestructiveMode();
     }
     scene.remove(powerUp.powerUp);
   }
