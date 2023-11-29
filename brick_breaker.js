@@ -118,8 +118,9 @@ function createCubes() {
             "assets/textures/01-Breakout-Tiles.png"
           );
         } else {
-          const textureFile = `assets/textures/0${colorIndex + 1
-            }-Breakout-Tiles.png`;
+          const textureFile = `assets/textures/0${
+            colorIndex + 1
+          }-Breakout-Tiles.png`;
           material = setMaterial(blockColors[colorIndex], textureFile);
         }
 
@@ -177,8 +178,9 @@ function createCubes() {
               "assets/textures/01-Breakout-Tiles.png"
             );
           } else {
-            const textureFile = `assets/textures/0${colorIndex + 1
-              }-Breakout-Tiles.png`;
+            const textureFile = `assets/textures/0${
+              colorIndex + 1
+            }-Breakout-Tiles.png`;
             material = setMaterial(blockColors[colorIndex], textureFile);
           }
           const cube = new THREE.Mesh(geometry, material);
@@ -658,7 +660,9 @@ function checkCollisionsObjects(ballObject) {
   }
 }
 
-function checkCollisionCubes(ballObject) {
+let indestructive = false;
+
+function checkCollisionCubes(ballObjects) {
   let rayDirections = [
     new THREE.Vector3(0, -1, 0),
     new THREE.Vector3(0, 1, 0),
@@ -672,7 +676,7 @@ function checkCollisionCubes(ballObject) {
 
   for (let direction of rayDirections) {
     let raycaster = new THREE.Raycaster(
-      ballObject.ball.position,
+      ballObjects.ball.position,
       direction,
       0,
       1
@@ -684,8 +688,12 @@ function checkCollisionCubes(ballObject) {
         intersects[0].face.normal.y,
         0
       );
-      handleReflection(incidenceVector, ballObject);
-      playAudio(bloco2);
+      if (!indestructive) {
+        handleReflection(incidenceVector, ballObjects);
+        playAudio(bloco2);
+      } else if (ballObjects == ballObject) {
+        playAudio(bloco3);
+      }
     }
   }
 }
@@ -794,7 +802,7 @@ function spawnPowerUp1(xPos, yPos) {
 }
 
 function spawnPowerUp2(xPos, yPos) {
-  if (blockCount2 == blockLimit + 5) {
+  if (blockCount2 == blockLimit + 5 && !indestructive) {
     blockCount2++;
     powerCount = 2;
     powerUpObject2.powerUp = new THREE.Mesh(
@@ -808,6 +816,21 @@ function spawnPowerUp2(xPos, yPos) {
 
     scene.add(powerUpObject2.powerUp);
   }
+}
+
+function indestructiveMode() {
+  indestructive = true;
+
+  const timeoutPromise = new Promise((resolve) => {
+    setTimeout(() => {
+      indestructive = false;
+      ballObject.ball.material = new THREE.MeshPhongMaterial({
+        color: "rgb(255, 255, 255)",
+      });
+
+      resolve();
+    }, 7000);
+  });
 }
 
 function movePowerUp(powerUp) {
@@ -834,22 +857,19 @@ function checkCollisionPowerUp(powerUp) {
       powerCount = 0;
       blockCount = 0;
       spawnExtraBalls();
-    }
-    else if (powerUp == powerUpObject2) {
+    } else if (powerUp == powerUpObject2) {
       powerCount = 0;
       blockCount2 = 0;
-
     }
     scene.remove(powerUp.powerUp);
   }
 }
 
-
-
 function restartCounters() {
   if (
-    ballObject2.ball.position.y < -yPosLimit &&
-    ballObject3.ball.position.y < -yPosLimit
+    (ballObject2.ball.position.y < -yPosLimit &&
+      ballObject3.ball.position.y < -yPosLimit) ||
+    ballObject.ball.position.y < -yPosLimit
   ) {
     extraBall = false;
     blockCount = 0;
@@ -880,7 +900,6 @@ function removeExtras() {
 
   scene.remove(powerUpObject.powerUp);
   scene.remove(powerUpObject2.powerUp);
-
 }
 
 //// Start
@@ -949,7 +968,6 @@ function onButtonUp(event) {
   pressedA = false;
 }
 
-
 //// Texture
 
 function loadTexture(manager, file) {
@@ -1001,7 +1019,6 @@ createCubes();
 createWalls();
 render();
 
-
 function render() {
   requestAnimationFrame(render);
   if (!pause) {
@@ -1017,7 +1034,6 @@ function render() {
 
       if (powerCount === 1) movePowerUp(powerUpObject);
       if (powerCount === 2) movePowerUp(powerUpObject2);
-
 
       if (extraBall) {
         checkCollisionsObjects(ballObject2);
@@ -1200,7 +1216,6 @@ loadAndSetAudio(loadingManager, "assets/sounds/bloco1.mp3", bloco1);
 loadAndSetAudio(loadingManager, "assets/sounds/bloco2.mp3", bloco2);
 loadAndSetAudio(loadingManager, "assets/sounds/bloco3.mp3", bloco3);
 loadAndSetAudio(loadingManager, "assets/sounds/rebatedor.mp3", rebatedor);
-
 
 camera.add(bloco1, bloco2, bloco3, rebatedor);
 
