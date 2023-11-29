@@ -83,7 +83,7 @@ let cubesBb = [];
 
 let cubesToIntersect = [];
 
-let yPosLimit = 5;
+let yPosLimit = 4;
 
 const blockColors = [
   "rgb(188, 188, 188)", // cinza
@@ -120,9 +120,8 @@ function createCubes() {
             "assets/textures/01-Breakout-Tiles.png"
           );
         } else {
-          const textureFile = `assets/textures/0${
-            colorIndex + 1
-          }-Breakout-Tiles.png`;
+          const textureFile = `assets/textures/0${colorIndex + 1
+            }-Breakout-Tiles.png`;
           material = setMaterial(blockColors[colorIndex], textureFile);
         }
 
@@ -180,9 +179,8 @@ function createCubes() {
               "assets/textures/01-Breakout-Tiles.png"
             );
           } else {
-            const textureFile = `assets/textures/0${
-              colorIndex + 1
-            }-Breakout-Tiles.png`;
+            const textureFile = `assets/textures/0${colorIndex + 1
+              }-Breakout-Tiles.png`;
             material = setMaterial(blockColors[colorIndex], textureFile);
           }
           const cube = new THREE.Mesh(geometry, material);
@@ -744,6 +742,7 @@ function checkCubesRemoval(ballObject) {
   } else {
     if (cubes.length == 8) {
       endFlag = true;
+      toggleEndGame();
     }
   }
 }
@@ -751,11 +750,13 @@ function checkCubesRemoval(ballObject) {
 function levelUp(lvl) {
   nivel = lvl;
   removeAll();
+  removeExtras();
   createCubes();
   createHitterMesh();
   createBall();
   createWalls();
   setBallPosition(ballObject);
+  loadModel(objPath, texturePath);
 }
 
 function convertTo255(color) {
@@ -769,8 +770,8 @@ function convertTo255(color) {
 
 //// Power UP
 
-let blockCount = 9;
-let blockCount2 = 13;
+let blockCount = 0;
+let blockCount2 = 0;
 let powerCount = 0;
 let blockLimit = 10;
 
@@ -1129,7 +1130,7 @@ function render() {
 
   renderer.render(scene, camera);
   if (pause) {
-    orbit.update(); // Make sure to call update on your OrbitControls instance
+    orbit.update();
   }
 }
 
@@ -1159,7 +1160,8 @@ window.addEventListener("keydown", (event) => {
     toggleFullscreen();
   }
   if (event.key === "g") {
-    levelUp(2);
+    if (nivel == 1) levelUp(2);
+    else if (nivel == 2) levelUp(3);
     setBallPosition(ballObject);
   }
   if (event.key === "h") {
