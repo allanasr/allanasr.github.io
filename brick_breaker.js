@@ -4,6 +4,8 @@ import { OrbitControls } from "../build/jsm/controls/OrbitControls.js";
 import { initRenderer, initCamera, onWindowResize } from "../libs/util/util.js";
 import { CSG } from "../libs/other/CSGMesh.js";
 import { Buttons } from "../libs/other/buttons.js";
+import { OBJLoader } from '../build/jsm/loaders/OBJLoader.js';
+
 
 let scene, renderer, camera, speedometer, orbit;
 scene = new THREE.Scene();
@@ -81,7 +83,7 @@ let cubesBb = [];
 
 let cubesToIntersect = [];
 
-let yPosLimit = 7;
+let yPosLimit = 5;
 
 const blockColors = [
   "rgb(188, 188, 188)", // cinza
@@ -950,12 +952,19 @@ function hideEndScreen() {
 }
 
 //// Buttons
-var buttons = new Buttons(onButtonDown, onButtonUp);
-var pressedA = false;
+var buttons = new Buttons(onButtonDown);
 function onButtonDown(event) {
   switch (event.target.id) {
     case "A":
       toggleStart();
+      if (!orbitEnabled) {
+        if (!start) {
+          toggleStart();
+        }
+        if (pause) {
+          togglePause();
+        }
+      }
 
       break;
     case "full":
@@ -964,9 +973,6 @@ function onButtonDown(event) {
   }
 }
 
-function onButtonUp(event) {
-  pressedA = false;
-}
 
 //// Texture
 
@@ -1010,6 +1016,75 @@ const cubeMapTexture = loadCubeMapTexture(loadingManager, urls);
 cubeMapTexture.rotation = 2 * Math.PI;
 scene.background = cubeMapTexture;
 scene.background.rotation = Math.PI;
+function loadModel(objPath, texturePath) {
+  const loader = new OBJLoader();
+  loader.load(
+    objPath,
+    function (object) { loadModelTexture(object, texturePath); },
+    function (xhr) {
+      console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+    }, function (error) {
+
+      console.log('An error happened');
+
+    }
+  );
+}
+
+function loadModelTexture(object, texturePath) {
+  const loader = new THREE.TextureLoader();
+  loader.load(
+    texturePath,
+    function (texture) {
+      applyTexture(object, texture);
+    },
+    undefined,
+    function (err) {
+      console.error('An error happened.');
+    }
+  );
+}
+
+function applyTexture(object, texture) {
+  const material = new THREE.MeshBasicMaterial({ map: texture });
+
+  object.traverse(function (child) {
+    if (child instanceof THREE.Mesh) {
+      child.material = material;
+    }
+  });
+
+  hitterMesh.traverse(function (child) {
+    if (child instanceof THREE.Mesh) {
+      child.material = material;
+    }
+  });
+
+  setTransformations(object);
+
+  hitterMesh.add(object);
+  object.castShadow = true;
+  object.receiveShadow = true;
+
+  animate();
+}
+
+function setTransformations(object) {
+  object.position.set(0, 1, -0.2);
+  object.scale.set(0.2, 0.2, 0.2);
+  object.rotation.x = Math.PI / 2;
+  object.rotation.y = Math.PI;
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  renderer.render(scene, camera);
+}
+
+const objPath = 'assets/textures/spaceship.obj';
+const texturePath = 'assets/textures/spaceship.png';
+
+loadModel(objPath, texturePath);
 //// Render
 
 let deltaTime;
@@ -1024,7 +1099,6 @@ function render() {
   if (!pause) {
     deltaTime = clock.getDelta();
     auxKeys();
-    console.log(blockCount);
     if (start) {
       checkCollisionsObjects(ballObject);
       checkCollisionCubes(ballObject);
@@ -1065,16 +1139,7 @@ window.addEventListener(
   false
 );
 
-window.addEventListener("mousedown", () => {
-  if (!orbitEnabled) {
-    if (!start) {
-      toggleStart();
-    }
-    if (pause) {
-      togglePause();
-    }
-  }
-});
+
 
 window.addEventListener("keydown", (event) => {
   if (event.key === "r") {
@@ -1178,12 +1243,11 @@ function onTouchMove(event) {
 
     const xLimit =
       planeWidth * (window.innerWidth / window.innerHeight) -
-      screenAspect * 2.5;
+      screenAspect * 5;
     hitterMesh.position.x = Math.min(
       Math.max(pointer.x * xLimit, -xLimit),
       xLimit
     );
-
     if (!start) {
       ballObject.ball.position.x = hitterMesh.position.x;
     }
